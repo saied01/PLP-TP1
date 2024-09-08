@@ -1,7 +1,8 @@
 module Proceso (Procesador, AT(Nil,Tern), RoseTree(Rose), Trie(TrieNodo), foldAT, foldRose, foldTrie, procVacio, procId, procCola, procHijosRose, procHijosAT, procRaizTrie, procSubTries, unoxuno, sufijos, inorder, preorder, postorder, preorderRose, hojasRose, ramasRose, caminos, palabras, ifProc,(++!), (.!)) where
 import Control.Applicative (Alternative(empty))
+import Data.Sequence.Internal.Sorting (foldToMaybeTree)
 
-import Test.HUnit
+--import Test.HUnit
 
 -- cd TP1
 -- runghc TP1.hs
@@ -24,7 +25,7 @@ data RoseTree a = Rose a [RoseTree a] deriving Eq
 
 -- Tries
 data Trie a = TrieNodo (Maybe a) [(Char, Trie a)] deriving Eq
--- E.g., t = TrieNodo (Just True) [('a', TrieNodo (Just True) []), ('b', TrieNodo Nothing [('a', TrieNodo (Just True) [('d', TrieNodo Nothing [])])]), ('c', TrieNodo (Just True) [])]
+-- E.g., t = TrieNodo (Just True) [('a', TrieNodo (Just True) [])], ('b', TrieNodo Nothing [('a', TrieNodo (Just True) [('d', TrieNodo Nothing [])])]), ('c', TrieNodo (Just True) [])]
 -- es el Trie Bool de que tiene True en la raíz, tres hijos (a, b, y c), y, a su vez, b tiene como hijo a d.
 
 
@@ -48,7 +49,7 @@ instance Show a => Show (AT a) where
             showSubtree (indent + 2) left ++
             showSubtree (indent + 2) middle ++
             showSubtree (indent + 2) right
-        
+
         showSubtree :: Show a => Int -> AT a -> String
         showSubtree indent subtree =
             case subtree of
@@ -57,7 +58,7 @@ instance Show a => Show (AT a) where
 
 instance Show a => Show (Trie a) where
     show = showTrie ""
-      where 
+      where
         showTrie :: Show a => String -> Trie a -> String
         showTrie indent (TrieNodo maybeValue children) =
             let valueLine = case maybeValue of
@@ -68,15 +69,15 @@ instance Show a => Show (Trie a) where
 
 
 --Ejercicio 1
-procVacio :: Procesador a b
-procVacio = (\_ -> [])
+procVacio :: Procesador a b -- a -> [b] 
+procVacio _ = []
 
-procId :: Procesador [a] a
-procId = id
+procId :: Procesador a a    -- a -> [a]
+procId x = [x] 
 
 
 procCola :: Procesador [a] a
-procCola = (\x -> if null x then [] else tail x)
+procCola x = if null x then [] else tail x
 
 
 rt = Rose 1 [Rose 2 [], Rose 3 [], Rose 4 [], Rose 5 []]
@@ -101,20 +102,22 @@ procSubTries (TrieNodo _ sub) = sub
 
 --foldAT :: undefined
 
+foldAT ::  b -> (a -> b -> b -> b -> b) -> AT a -> b
+foldAT cb f at = case at of
+  Nil   -> cb
+  (Tern r i m d)  -> f r (rec i) (rec m) (rec d)
+  where rec = foldAT cb f
 
-foldAT :: (a -> b -> b -> b -> b) -> b -> AT a -> b
-foldAT _ z Nil = z
-foldAT f z (Tern x i m d) = f x (foldAT f z i) (foldAT f z m) (foldAT f z d)
+--foldAT _ z Nil = z
+--foldAT f z (Tern r i m d) = f r (foldAT f z i) (foldAT f z m) (foldAT f z d)
 
 
 --foldRose :: undefined
 foldRose :: (a -> [b] -> b) -> RoseTree a -> b
-foldRose f (Rose x hijos) = f x (map ac hijos)
-  where ac = foldRose f
+foldRose f (Rose x hijos) = f x (map rec hijos)
+  where rec = foldRose f
 
---foldTrie :: undefined
 foldTrie = undefined
-
 
 --Ejercicio 3
 unoxuno :: Procesador [a] [a]
@@ -127,25 +130,41 @@ sufijos (x:xs) = (x:xs) : sufijos xs
 
 
 --Ejercicio 4
---preorder :: undefined
-preorder = undefined
+at2 = Tern 1 (Tern 2 (Tern 3 (Tern 4 Nil Nil Nil) (Tern 5 Nil Nil Nil) (Tern 6 Nil Nil Nil)) (Tern 7 Nil Nil Nil) Nil) Nil (Tern 10 Nil (Tern 12 Nil Nil Nil) Nil)
+{-
+               1
+       [2     Nil      10]
+     [3 6 Nil]    [Nil 12 Nil]
+  [4 Nil 5]
 
---inorder :: undefined
-inorder = undefined
+-}
 
---postorder :: undefined
-postorder = undefined
+preorder :: Procesador (AT a) a
+preorder = foldAT [] (\rr ri rm rd -> if null ri && null rm && null rd then [rr] else rr : (ri ++ rm ++ rd)) 
+
+inorder :: Procesador (AT a) a
+inorder = foldAT [] (\rr ri rm rd -> if null ri && null rm && null rd then [rr] else ri ++ rm ++ [rr] ++ rd)
+
+postorder :: Procesador (AT a) a
+postorder = foldAT [] (\rr ri rm rd -> if null ri && null rm && null rd then [rr] else (ri ++ rm ++ rd) ++ [rr]) 
 
 --Ejercicio 5
 
+rt2 = Rose 1 [Rose 2 [Rose 3 [], Rose 4 []], Rose 5 [], Rose 6 [Rose 7 []], Rose 8 []]
+{-
+               [1]
+          [2  5  6  8]
+         [3 4]  [7]
+-}
+
 preorderRose :: Procesador (RoseTree a) a
-preorderRose = undefined
+preorderRose = foldRose (\n rec -> if null rec then [n] else n : concat rec)
 
 hojasRose :: Procesador (RoseTree a) a
-hojasRose = undefined
+hojasRose = foldRose (\n rec -> if null rec then [n] else concat rec)
 
 ramasRose :: Procesador (RoseTree a) [a]
-ramasRose = undefined
+ramasRose = foldRose (\n rec -> if null rec then [[n]] else map (n:) (concat rec))
 
 
 --Ejercicio 6
