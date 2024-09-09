@@ -127,25 +127,37 @@ sufijos (x:xs) = (x:xs) : sufijos xs
 
 
 --Ejercicio 4
---preorder :: undefined
-preorder = undefined
+data AT a = Nil | Tern a (AT a) (AT a) (AT a)
+    deriving (Show)
 
---inorder :: undefined
-inorder = undefined
+preorder :: AT a -> [a]
+preorder Nil = []
+preorder (Tern value left middle right) = [value] ++ preorder left ++ preorder middle ++ preorder right
 
---postorder :: undefined
-postorder = undefined
+postorder :: AT a -> [a]
+postorder Nil = []
+postorder (Tern value left middle right) = postorder left ++ postorder middle ++ postorder right ++ [value]
+
+inorder :: AT a -> [a]
+inorder Nil = []
+inorder (Tern value left middle right) = inorder left ++ inorder middle ++ [value] ++ inorder right
+
 
 --Ejercicio 5
 
 preorderRose :: Procesador (RoseTree a) a
-preorderRose = undefined
+preorderRose (Rose value []) = [value]
+preorderRose (Rose value (x:xs)) = value : foldr (\ childValue acc -> preorderRose childValue ++ acc) [] (x:xs)
+
 
 hojasRose :: Procesador (RoseTree a) a
-hojasRose = undefined
+hojasRose (Rose value []) = [value]
+hojasRose (Rose value (x:xs)) =  foldr (\ childValue acc -> hojasRose childValue ++ acc) [] (x:xs)
+
 
 ramasRose :: Procesador (RoseTree a) [a]
-ramasRose = undefined
+ramasRose (Rose value []) = [[value]]
+ramasRose (Rose value (x:xs)) = foldr (\child acc -> (map (value :) (ramasRose child)) ++ acc) [] (x:xs)
 
 
 --Ejercicio 6
