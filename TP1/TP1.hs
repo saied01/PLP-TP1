@@ -81,7 +81,7 @@ procCola = (\x -> if null x then [] else tail x)
 
 rt = Rose 1 [Rose 2 [], Rose 3 [], Rose 4 [], Rose 5 []]
 at = Tern 1 (Tern 2 Nil Nil Nil) (Tern 3 Nil Nil Nil) (Tern 4 Nil Nil Nil)
-t = TrieNodo (Just True) [('a', TrieNodo (Just True) []), ('b', TrieNodo Nothing [('a', TrieNodo (Just True) [('d', TrieNodo Nothing [])])]), ('c', TrieNodo (Just True) [])]
+t = TrieNodo (Nothing) [('a', TrieNodo (Just True) []), ('b', TrieNodo Nothing [('a', TrieNodo (Just True) [('d', TrieNodo Nothing [])])]), ('c', TrieNodo (Just True) [])]
 
 procHijosRose :: Procesador (RoseTree a) (RoseTree a)
 procHijosRose (Rose _ hijos) = hijos
@@ -113,7 +113,9 @@ foldRose f (Rose x hijos) = f x (map ac hijos)
   where ac = foldRose f
 
 --foldTrie :: undefined
-foldTrie = undefined
+
+foldTrie :: (Maybe a -> [(Char, b)] -> b) -> Trie a -> b
+foldTrie f (TrieNodo valor hijos) = f valor (map (\(c, hijo) -> (c, foldTrie f hijo)) hijos)
 
 
 --Ejercicio 3
@@ -127,8 +129,11 @@ sufijos (x:xs) = (x:xs) : sufijos xs
 
 
 --Ejercicio 4
-data AT a = Nil | Tern a (AT a) (AT a) (AT a)
-    deriving (Show)
+--data AT a = Nil | Tern a (AT a) (AT a) (AT a)
+--    deriving (Show)
+
+preorderAT :: AT a -> [a]
+preorderAT = foldAT (\x izq med der -> [x] ++ izq ++ med ++ der) []
 
 preorder :: AT a -> [a]
 preorder Nil = []
@@ -163,13 +168,27 @@ ramasRose (Rose value (x:xs)) = foldr (\child acc -> (map (value :) (ramasRose c
 --Ejercicio 6
 
 --caminos :: undefined
-caminos = undefined
 
+caminos :: Trie a -> [String]
+caminos = foldTrie construirCaminos
+  where
+    construirCaminos :: Maybe a -> [(Char, [String])] -> [String]
+    construirCaminos valor hijos =
+      let caminosHijos = concatMap (\(v, hijo) -> map (v :) hijo) hijos
+      in "" : caminosHijos
 
 --Ejercicio 7
 
 --palabras :: undefined
-palabras = undefined
+palabras :: Trie a -> [String]
+palabras = foldTrie construirCaminos
+  where
+    construirCaminos :: Maybe a -> [(Char, [String])] -> [String]
+    construirCaminos valor hijos =
+      let caminosHijos = concatMap (\(v, hijo) -> map (v :) hijo) hijos
+      in case valor of
+           Just _  -> "" : caminosHijos
+           Nothing -> caminosHijos
 
 
 --Ejercicio 8
