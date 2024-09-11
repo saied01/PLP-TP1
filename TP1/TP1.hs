@@ -6,7 +6,6 @@ import Test.HUnit
 -- cd TP1
 -- runghc TP1.hs
 
-
 --Definiciones de tipos
 
 type Procesador a b = a -> [b]
@@ -26,6 +25,7 @@ data RoseTree a = Rose a [RoseTree a] deriving Eq
 data Trie a = TrieNodo (Maybe a) [(Char, Trie a)] deriving Eq
 -- E.g., t = TrieNodo (Just True) [('a', TrieNodo (Just True) []), ('b', TrieNodo Nothing [('a', TrieNodo (Just True) [('d', TrieNodo Nothing [])])]), ('c', TrieNodo (Just True) [])]
 -- es el Trie Bool de que tiene True en la raíz, tres hijos (a, b, y c), y, a su vez, b tiene como hijo a d.
+
 
 
 -- Definiciones de Show
@@ -175,7 +175,9 @@ caminos = foldTrie construirCaminos
     construirCaminos :: Maybe a -> [(Char, [String])] -> [String]
     construirCaminos valor hijos =
       let caminosHijos = concatMap (\(v, hijo) -> map (v :) hijo) hijos
-      in "" : caminosHijos
+      in case valor of
+            Just _ -> "" : caminosHijos
+            Nothing -> "" : caminosHijos
 
 --Ejercicio 7
 
@@ -194,15 +196,15 @@ palabras = foldTrie construirCaminos
 --Ejercicio 8
 -- 8.a)
 ifProc :: (a->Bool) -> Procesador a b -> Procesador a b -> Procesador a b
-ifProc = undefined
+ifProc = \f p1 p2 x -> if f x then p1 x else p2 x
 
 -- 8.b)
 (++!) :: Procesador a b -> Procesador a b -> Procesador a b
-(++!) = undefined
+(++!) = (\f1 f2 -> \x -> f1 x ++ f2 x) 
 
 -- 8.c)
 (.!) :: Procesador b c -> Procesador a b -> Procesador a c
-(.!) = undefined
+(.!) p1 p2 = \x -> concatMap p1 (p2 x)
 
 --Ejercicio 9
 -- Se recomienda poner la demostración en un documento aparte, por claridad y prolijidad, y, preferentemente, en algún formato de Markup o Latex, de forma de que su lectura no sea complicada.
