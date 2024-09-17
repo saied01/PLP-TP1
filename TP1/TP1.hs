@@ -132,12 +132,10 @@ sufijos (x:xs) = (x:xs) : sufijos xs
 --data AT a = Nil | Tern a (AT a) (AT a) (AT a)
 --    deriving (Show)
 
-preorderAT :: AT a -> [a]
-preorderAT = foldAT (\x izq med der -> [x] ++ izq ++ med ++ der) []
+
 
 preorder :: AT a -> [a]
-preorder Nil = []
-preorder (Tern value left middle right) = [value] ++ preorder left ++ preorder middle ++ preorder right
+preorder = foldAT (\x izq med der -> [x] ++ izq ++ med ++ der) []
 
 postorder :: AT a -> [a]
 postorder Nil = []
@@ -151,37 +149,26 @@ inorder (Tern value left middle right) = inorder left ++ inorder middle ++ [valu
 --Ejercicio 5
 
 preorderRose :: Procesador (RoseTree a) a
-preorderRose (Rose value []) = [value]
-preorderRose (Rose value (x:xs)) = value : foldr (\ childValue acc -> preorderRose childValue ++ acc) [] (x:xs)
+preorderRose = foldRose (\n rec -> if null rec then [n] else n : concat rec)
 
 
 hojasRose :: Procesador (RoseTree a) a
-hojasRose (Rose value []) = [value]
-hojasRose (Rose value (x:xs)) =  foldr (\ childValue acc -> hojasRose childValue ++ acc) [] (x:xs)
+hojasRose = foldRose (\n rec -> if null rec then [n] else concat rec)
 
 
 ramasRose :: Procesador (RoseTree a) [a]
-ramasRose (Rose value []) = [[value]]
-ramasRose (Rose value (x:xs)) = foldr (\child acc -> (map (value :) (ramasRose child)) ++ acc) [] (x:xs)
+ramasRose = foldRose (\n rec -> if null rec then [[n]] else map (n:) (concat rec))
 
 
 --Ejercicio 6
 
---caminos :: undefined
 
 caminos :: Trie a -> [String]
-caminos = foldTrie construirCaminos
-  where
-    construirCaminos :: Maybe a -> [(Char, [String])] -> [String]
-    construirCaminos valor hijos =
-      let caminosHijos = concatMap (\(v, hijo) -> map (v :) hijo) hijos
-      in case valor of
-            Just _ -> "" : caminosHijos
-            Nothing -> "" : caminosHijos
+caminos = foldTrie (\_ hijos -> "" : [v : hijo | (v, hijos') <- hijos, hijo <- hijos'])
+
 
 --Ejercicio 7
 
---palabras :: undefined
 palabras :: Trie a -> [String]
 palabras = foldTrie construirCaminos
   where
