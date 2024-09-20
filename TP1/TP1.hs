@@ -3,9 +3,6 @@ import Control.Applicative (Alternative(empty))
 
 import Test.HUnit
 
--- cd TP1
--- runghc TP1.hs
-
 --Definiciones de tipos
 
 type Procesador a b = a -> [b]
@@ -203,6 +200,15 @@ t = TrieNodo (Nothing) [('a', TrieNodo (Just True) []), ('b', TrieNodo Nothing [
 tVacio :: Trie a
 tVacio = TrieNodo Nothing []
 
+at_ej4 = Tern 16 (Tern 1 (Tern 9 Nil Nil Nil) (Tern 7 Nil Nil Nil) (Tern 2 Nil Nil Nil)) (Tern 14 (Tern 0 Nil Nil Nil) (Tern 3 Nil Nil Nil) (Tern 6 Nil Nil Nil)) (Tern 10 (Tern 8 Nil Nil Nil) (Tern 5 Nil Nil Nil) (Tern 4 Nil Nil Nil))
+at_Vacio = Nil
+at_unSoloNodo = Tern 1 Nil Nil Nil
+at_asimetrico = Tern 16 (Tern 1 (Tern 9 Nil Nil Nil) Nil Nil) Nil (Tern 3 Nil Nil Nil) 
+
+rt_unElem        = Rose 1 []
+rt_dosNiveles    = Rose 1 [Rose 2 [], Rose 3 [], Rose 4 [], Rose 5 [], Rose 6 []]
+rt_tresNiveles   = Rose 1 [Rose 2 [Rose 6 [], Rose 7 []], Rose 3 [ Rose 8 [], Rose 9 []], Rose 4 [Rose 10 [], Rose 11 []], Rose 5 [Rose 12 [], Rose 13 []]]
+
 
 allTests = test [ -- Reemplazar los tests de prueba por tests propios
   "ejercicio1" ~: testsEj1,
@@ -216,15 +222,6 @@ allTests = test [ -- Reemplazar los tests de prueba por tests propios
   "ejercicio8b" ~: testsEj8b,
   "ejercicio8c" ~: testsEj8c
   ]
-  
-at_ej4 = Tern 16 (Tern 1 (Tern 9 Nil Nil Nil) (Tern 7 Nil Nil Nil) (Tern 2 Nil Nil Nil)) (Tern 14 (Tern 0 Nil Nil Nil) (Tern 3 Nil Nil Nil) (Tern 6 Nil Nil Nil)) (Tern 10 (Tern 8 Nil Nil Nil) (Tern 5 Nil Nil Nil) (Tern 4 Nil Nil Nil))
-at_Vacio = Nil
-at_unSoloNodo = Tern 1 Nil Nil Nil
-at_asimetrico = Tern 16 (Tern 1 (Tern 9 Nil Nil Nil) Nil Nil) Nil (Tern 3 Nil Nil Nil) 
-
-rt_unElem        = Rose 1 []
-rt_dosNiveles    = Rose 1 [Rose 2 [], Rose 3 [], Rose 4 [], Rose 5 [], Rose 6 []]
-rt_tresNiveles   = Rose 1 [Rose 2 [Rose 6 [], Rose 7 []], Rose 3 [ Rose 8 [], Rose 9 []], Rose 4 [Rose 10 [], Rose 11 []], Rose 5 [Rose 12 [], Rose 13 []]]
 
 testsEj1 = TestList [
   "procVacio" ~: ([] :: [Int]) ~=? procVacio (42 :: Int),
@@ -244,7 +241,6 @@ testsEj1 = TestList [
   ]
 
 
--- Combinación de todos los casos de prueba
 testsEj2 = TestList [
   "foldAT suma" ~: foldAT (\x i m d -> x + i + m + d) 0 at ~?= 10,
   "foldAT producto" ~: foldAT (\x i m d -> x * i * m * d) 1 at ~?= 24,
@@ -256,7 +252,7 @@ testsEj2 = TestList [
   "foldTrie valores Just" ~: foldTrie (\valor hijos -> maybe 0 (const 1) valor + sum (map snd hijos)) t ~?= 3 
   ]
 
--- Definición de tests para `unoxuno` y `sufijos`
+
 testsEj3 = test [
     "unoxuno abc" ~: unoxuno "abc" ~?= ["a", "b", "c"],
     "unoxuno 123" ~: unoxuno [1, 2, 3] ~?= [[1], [2], [3]],
@@ -298,8 +294,6 @@ testsEj5 = test [ -- Casos de test para el ejercicio 5
   "Test ramasRose con RT de dos niveles"  ~: (ramasRose rt_dosNiveles)  ~=? ([[1,2],[1,3],[1,4],[1,5],[1,6]]),
   "Test ramasRose con RT de tres niveles" ~: (ramasRose rt_tresNiveles)  ~=? ([[1,2,6],[1,2,7],[1,3,8],[1,3,9],[1,4,10],[1,4,11],[1,5,12],[1,5,13]])
 
-
-
   ]
 
 testsEj6 = test [ -- Casos de test para el ejercicio 6
@@ -312,16 +306,17 @@ testsEj7 = test [ -- Casos de test para el ejercicio 7
   "palabras vacio" ~: palabras tVacio ~?= []
   ]
 
-testsEj8a = test [ -- Casos de test para el ejercicio 7
-  True         -- Caso de test 1 - expresión a testear
-    ~=? True                                          -- Caso de test 1 - resultado esperado
+testsEj8a = test [ 
+    "positivos" ~: ifProc (>0) (\x -> [x + 1]) (\x -> [x - 1]) 1 ~?= [2],
+    "negativos" ~: ifProc (>0) (\x -> [x + 1]) (\x -> [x - 1]) (-1) ~?= [-2],
+    "impares" ~:ifProc odd (\x -> [x * 2]) (\x -> [x * 3]) 3 ~?= [6],
+    "pares" ~: ifProc odd (\x -> [x * 2]) (\x -> [x * 3]) 4 ~?= [12]
   ]
-testsEj8b = test [ -- Casos de test para el ejercicio 7
-  True         -- Caso de test 1 - expresión a testear
-    ~=? True                                          -- Caso de test 1 - resultado esperado
+testsEj8b = test [
+  "test ejemplo ej8b" ~: (postorder ++! preorder) at ~?= [2,3,4,1,1,2,3,4]
   ]
-testsEj8c = test [ -- Casos de test para el ejercicio 7
-  True         -- Caso de test 1 - expresión a testear
-    ~=? True                                          -- Caso de test 1 - resultado esperado
+
+testsEj8c = test [
+  "test enunciado ej8c" ~: ((\z->[0..z]) .! (map (+1))) [1,3] ~?= [0,1,2,0,1,2,3,4]
   ]
 
