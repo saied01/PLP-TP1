@@ -79,10 +79,6 @@ procCola :: Procesador [a] a
 procCola = (\x -> if null x then [] else tail x)
 
 
-rt = Rose 1 [Rose 2 [], Rose 3 [], Rose 4 [], Rose 5 []]
-at = Tern 1 (Tern 2 Nil Nil Nil) (Tern 3 Nil Nil Nil) (Tern 4 Nil Nil Nil)
-t = TrieNodo (Nothing) [('a', TrieNodo (Just True) []), ('b', TrieNodo Nothing [('a', TrieNodo (Just True) [('d', TrieNodo Nothing [])])]), ('c', TrieNodo (Just True) [])]
-
 procHijosRose :: Procesador (RoseTree a) (RoseTree a)
 procHijosRose (Rose _ hijos) = hijos
 
@@ -187,13 +183,28 @@ ifProc = \f p1 p2 x -> if f x then p1 x else p2 x
 (.!) :: Procesador b c -> Procesador a b -> Procesador a c
 (.!) p1 p2 = \x -> concatMap p1 (p2 x)
 
---Ejercicio 9
--- Se recomienda poner la demostración en un documento aparte, por claridad y prolijidad, y, preferentemente, en algún formato de Markup o Latex, de forma de que su lectura no sea complicada.
-
 
 {-Tests-}
 main :: IO Counts
 main = do runTestTT allTests
+
+-- definimos algunas estructuras para los test:
+
+rt :: RoseTree Integer
+rt = Rose 1 [Rose 2 [], Rose 3 [], Rose 4 [], Rose 5 []]
+rtVacio :: RoseTree a
+rtVacio = Rose undefined []
+
+at :: AT Integer
+at = Tern 1 (Tern 2 Nil Nil Nil) (Tern 3 Nil Nil Nil) (Tern 4 Nil Nil Nil)
+atVcio :: AT a
+atVcio = Nil
+
+t :: Trie Bool
+t = TrieNodo (Nothing) [('a', TrieNodo (Just True) []), ('b', TrieNodo Nothing [('a', TrieNodo (Just True) [('d', TrieNodo Nothing [])])]), ('c', TrieNodo (Just True) [])]
+tVacio :: Trie a
+tVacio = TrieNodo Nothing []
+
 
 allTests = test [ -- Reemplazar los tests de prueba por tests propios
   "ejercicio1" ~: testsEj1,
@@ -262,13 +273,13 @@ testsEj5 = test [ -- Casos de test para el ejercicio 5
   ]
 
 testsEj6 = test [ -- Casos de test para el ejercicio 6
-  False       -- Caso de test 1 - expresión a testear
-    ~=? False                                            -- Caso de test 1 - resultado esperado
+  "camino enunciado" ~: caminos t ~?= ["", "a", "b", "ba", "bad", "c"],
+  "camino vacio" ~: caminos tVacio ~?= [""]
   ]
 
 testsEj7 = test [ -- Casos de test para el ejercicio 7
-  True         -- Caso de test 1 - expresión a testear
-    ~=? True                                          -- Caso de test 1 - resultado esperado
+  "palabras enunciado" ~: palabras t ~?= ["a", "ba", "c"],
+  "palabras vacio" ~: palabras tVacio ~?= []
   ]
 
 testsEj8a = test [ -- Casos de test para el ejercicio 7
