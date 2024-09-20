@@ -99,20 +99,17 @@ procSubTries (TrieNodo _ sub) = sub
 
 --Ejercicio 2
 
---foldAT :: undefined
-
 
 foldAT :: (a -> b -> b -> b -> b) -> b -> AT a -> b
 foldAT _ z Nil = z
 foldAT f z (Tern x i m d) = f x (foldAT f z i) (foldAT f z m) (foldAT f z d)
 
 
---foldRose :: undefined
+
 foldRose :: (a -> [b] -> b) -> RoseTree a -> b
 foldRose f (Rose x hijos) = f x (map ac hijos)
   where ac = foldRose f
 
---foldTrie :: undefined
 
 foldTrie :: (Maybe a -> [(Char, b)] -> b) -> Trie a -> b
 foldTrie f (TrieNodo valor hijos) = f valor (map (\(c, hijo) -> (c, foldTrie f hijo)) hijos)
@@ -129,9 +126,6 @@ sufijos (x:xs) = (x:xs) : sufijos xs
 
 
 --Ejercicio 4
---data AT a = Nil | Tern a (AT a) (AT a) (AT a)
---    deriving (Show)
-
 
 
 preorder :: AT a -> [a]
@@ -198,7 +192,6 @@ ifProc = \f p1 p2 x -> if f x then p1 x else p2 x
 
 
 {-Tests-}
-{-
 main :: IO Counts
 main = do runTestTT allTests
 
@@ -215,21 +208,48 @@ allTests = test [ -- Reemplazar los tests de prueba por tests propios
   "ejercicio8c" ~: testsEj8c
   ]
 
-testsEj1 = test [ -- Casos de test para el ejercicio 1
-  "Test procVacio con valor 1" ~: (procVacio 1) ~=? [],
-  "Test procVacio con valor 'a'" ~: (procVacio 'a') ~=? [],
-  "Test procVacio con valor True" ~: (procVacio True) ~=? []                  -- Caso de test 2 - resultado esperado
+
+testsEj1 = TestList [
+  "procVacio" ~: ([] :: [Int]) ~=? procVacio (42 :: Int),
+  "procId lista vacía" ~: ([] :: [Int]) ~=? procId ([] :: [Int]),
+  "procId lista no vacía" ~: ([1,2,3] :: [Int]) ~=? procId ([1,2,3] :: [Int]),
+  "procCola lista vacía" ~: ([] :: [Int]) ~=? procCola ([] :: [Int]),
+  "procCola lista no vacía" ~: ([2,3] :: [Int]) ~=? procCola ([1,2,3] :: [Int]),
+  "procHijosRose sin hijos" ~: ([] :: [RoseTree Int]) ~=? procHijosRose (Rose (1 :: Int) []),
+  "procHijosRose con hijos" ~: ([Rose (2::Int) [], Rose (3::Int) []] :: [RoseTree Int]) ~=? procHijosRose (Rose (1 :: Int) [Rose 2 [], Rose 3 []]),
+  "procHijosAT Nil" ~: ([] :: [AT Int]) ~=? procHijosAT (Nil :: AT Int),
+  "procHijosAT no Nil" ~: ([Nil, Nil, Nil] :: [AT Int]) ~=? procHijosAT (Tern (1 :: Int) Nil Nil Nil),
+  "procRaizTrie con valor" ~: ([Just 'a'] :: [Maybe Char]) ~=? procRaizTrie (TrieNodo (Just 'a') []),
+  "procRaizTrie sin valor" ~: ([Nothing] :: [Maybe Char]) ~=? procRaizTrie (TrieNodo Nothing []),
+  "procSubTries sin subárboles" ~: ([] :: [(Char, Trie Char)]) ~=? procSubTries (TrieNodo (Nothing :: Maybe Char) []),
+  "procSubTries con subárboles" ~: ([('a', TrieNodo Nothing []), ('b', TrieNodo Nothing [])] :: [(Char, Trie Char)]) ~=? 
+                                     procSubTries (TrieNodo (Nothing :: Maybe Char) [('a', TrieNodo Nothing []), ('b', TrieNodo Nothing [])])
   ]
 
-testsEj2 = test [ -- Casos de test para el ejercicio 2
-  (0,0)       -- Caso de test 1 - expresión a testear
-    ~=? (0,0)                   -- Caso de test 1 - resultado esperado
+
+-- Combinación de todos los casos de prueba
+testsEj2 = TestList [
+  "foldAT suma" ~: foldAT (\x i m d -> x + i + m + d) 0 at ~?= 10,
+  "foldAT producto" ~: foldAT (\x i m d -> x * i * m * d) 1 at ~?= 24,
+  
+  "foldRose suma" ~: foldRose (\x hijos -> x + sum hijos) rt ~?= 15,
+  "foldRose cuenta nodos" ~: foldRose (\_ hijos -> 1 + sum hijos) rt ~?= 5,
+  
+  "foldTrie cuenta nodos" ~: foldTrie (\_ hijos -> 1 + sum (map snd hijos)) t ~?= 6,
+  "foldTrie valores Just" ~: foldTrie (\valor hijos -> maybe 0 (const 1) valor + sum (map snd hijos)) t ~?= 3 
   ]
 
-testsEj3 = test [ -- Casos de test para el ejercicio 3
-  'a'      -- Caso de test 1 - expresión a testear
-    ~=? 'a'            -- Caso de test 1 - resultado esperado
+-- Definición de tests para `unoxuno` y `sufijos`
+testsEj3 = test [
+    "unoxuno abc" ~: unoxuno "abc" ~?= ["a", "b", "c"],
+    "unoxuno 123" ~: unoxuno [1, 2, 3] ~?= [[1], [2], [3]],
+    "unoxuno vacio" ~: unoxuno ([] :: [Int]) ~?= [],
+
+    "sufijos abc" ~: sufijos "abc" ~?= ["abc", "bc", "c", ""],
+    "sufijos 123" ~: sufijos [1, 2, 3] ~?= [[1, 2, 3], [2, 3], [3], []],
+    "sufijos vacio" ~: sufijos ([] :: [Int]) ~?= [[]] 
   ]
+
 
 testsEj4 = test [ -- Casos de test para el ejercicio 4
   ""       -- Caso de test 1 - expresión a testear
@@ -264,4 +284,3 @@ testsEj8c = test [ -- Casos de test para el ejercicio 7
     ~=? True                                          -- Caso de test 1 - resultado esperado
   ]
 
-  -}
