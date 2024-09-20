@@ -124,16 +124,14 @@ sufijos (x:xs) = (x:xs) : sufijos xs
 --Ejercicio 4
 
 
-preorder :: AT a -> [a]
-preorder = foldAT (\x izq med der -> [x] ++ izq ++ med ++ der) []
+preorder :: Procesador (AT a) a
+preorder = foldAT (\rr ri rm rd -> rr : (ri ++ rm ++ rd)) []
 
-postorder :: AT a -> [a]
-postorder Nil = []
-postorder (Tern value left middle right) = postorder left ++ postorder middle ++ postorder right ++ [value]
+inorder :: Procesador (AT a) a
+inorder = foldAT (\rr ri rm rd ->  ri ++ rm ++ [rr] ++ rd) []
 
-inorder :: AT a -> [a]
-inorder Nil = []
-inorder (Tern value left middle right) = inorder left ++ inorder middle ++ [value] ++ inorder right
+postorder :: Procesador (AT a) a
+postorder = foldAT (\rr ri rm rd -> (ri ++ rm ++ rd) ++ [rr]) []
 
 
 --Ejercicio 5
@@ -218,7 +216,15 @@ allTests = test [ -- Reemplazar los tests de prueba por tests propios
   "ejercicio8b" ~: testsEj8b,
   "ejercicio8c" ~: testsEj8c
   ]
+  
+at_ej4 = Tern 16 (Tern 1 (Tern 9 Nil Nil Nil) (Tern 7 Nil Nil Nil) (Tern 2 Nil Nil Nil)) (Tern 14 (Tern 0 Nil Nil Nil) (Tern 3 Nil Nil Nil) (Tern 6 Nil Nil Nil)) (Tern 10 (Tern 8 Nil Nil Nil) (Tern 5 Nil Nil Nil) (Tern 4 Nil Nil Nil))
+at_Vacio = Nil
+at_unSoloNodo = Tern 1 Nil Nil Nil
+at_asimetrico = Tern 16 (Tern 1 (Tern 9 Nil Nil Nil) Nil Nil) Nil (Tern 3 Nil Nil Nil) 
 
+rt_unElem        = Rose 1 []
+rt_dosNiveles    = Rose 1 [Rose 2 [], Rose 3 [], Rose 4 [], Rose 5 [], Rose 6 []]
+rt_tresNiveles   = Rose 1 [Rose 2 [Rose 6 [], Rose 7 []], Rose 3 [ Rose 8 [], Rose 9 []], Rose 4 [Rose 10 [], Rose 11 []], Rose 5 [Rose 12 [], Rose 13 []]]
 
 testsEj1 = TestList [
   "procVacio" ~: ([] :: [Int]) ~=? procVacio (42 :: Int),
@@ -263,13 +269,37 @@ testsEj3 = test [
 
 
 testsEj4 = test [ -- Casos de test para el ejercicio 4
-  ""       -- Caso de test 1 - expresión a testear
-    ~=? ""                             -- Caso de test 1 - resultado esperado
+  "Test preorder con AT vacio"            ~: (preorder at_Vacio)       ~=? ([] :: [Int]),
+  "Test preorder con AT de un solo nodo"  ~: (preorder at_unSoloNodo)  ~=? ([1]),
+  "Test preorder con AT de ejemplo"       ~: (preorder at_ej4)         ~=? ([16,1,9,7,2,14,0,3,6,10,8,5,4]),
+  "Test preorder con AT asimetrico"       ~: (preorder at_asimetrico)  ~=? ([16,1,9,3]),
+
+
+  "Test postorder con AT vacio"            ~: (postorder at_Vacio)       ~=? ([] :: [Int]),
+  "Test postorder con AT de un solo nodo"  ~: (postorder at_unSoloNodo)  ~=? ([1]),
+  "Test postorder con AT de ejemplo"       ~: (postorder at_ej4)         ~=? ([9,7,2,1,0,3,6,14,8,5,4,10,16]),
+  "Test postrder con AT asimetrico"        ~: (postorder at_asimetrico)  ~=? ([9,1,3,16] :: [Int]),
+
+  "Test inorder con AT vacio"              ~: (inorder at_Vacio)         ~=? ([] :: [Int]),
+  "Test postorder con AT de un solo nodo"  ~: (inorder at_unSoloNodo)    ~=? ([1]),
+  "Test inorder con AT de ejemplo"         ~: (inorder at_ej4)           ~=? ([9,7,1,2,0,3,14,6,16,8,5,10,4]),
+  "Test inorder con AT asimetrico"         ~: (inorder at_asimetrico)    ~=? ([9,1,16,3])
+
   ]
 
 testsEj5 = test [ -- Casos de test para el ejercicio 5
-  0       -- Caso de test 1 - expresión a testear
-    ~=? 0                                       -- Caso de test 1 - resultado esperado
+  "Test RoseTree con RT de un Elemento"   ~: (preorderRose rt_unElem)       ~=? ([1]),
+  "Test RoseTree con RT de dos niveles"   ~: (preorderRose rt_dosNiveles)   ~=? ([1,2,3,4,5,6]),
+  "Test RoseTree con RT de tres niveles"  ~: (preorderRose rt_tresNiveles)  ~=? ([1,2,6,7,3,8,9,4,10,11,5,12,13]),
+  "Test hojasRose con RT de un elemento"  ~: (hojasRose rt_unElem)  ~=? ([1]),
+  "Test hojasRose con RT de dos niveles"  ~: (hojasRose rt_dosNiveles)  ~=? ([2,3,4,5,6]),
+  "Test hojasRose con RT de tres niveles" ~: (hojasRose rt_tresNiveles)  ~=? ([6,7,8,9,10,11,12,13]),
+  "Test ramasRose con RT de un elemento"  ~: (ramasRose rt_unElem)  ~=? ([[1]]),
+  "Test ramasRose con RT de dos niveles"  ~: (ramasRose rt_dosNiveles)  ~=? ([[1,2],[1,3],[1,4],[1,5],[1,6]]),
+  "Test ramasRose con RT de tres niveles" ~: (ramasRose rt_tresNiveles)  ~=? ([[1,2,6],[1,2,7],[1,3,8],[1,3,9],[1,4,10],[1,4,11],[1,5,12],[1,5,13]])
+
+
+
   ]
 
 testsEj6 = test [ -- Casos de test para el ejercicio 6
