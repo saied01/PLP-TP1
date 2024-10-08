@@ -93,9 +93,11 @@ procSubTries (TrieNodo _ sub) = sub
 --Ejercicio 2
 
 
-foldAT :: (a -> b -> b -> b -> b) -> b -> AT a -> b
-foldAT _ z Nil = z
-foldAT f z (Tern x i m d) = f x (foldAT f z i) (foldAT f z m) (foldAT f z d)
+foldAT::(a -> b -> b -> b -> b) -> b -> AT a -> b
+foldAT fTri fNil at = case at of
+              Nil -> fNil
+              Tern val h1 h2 h3 -> fTri val (rec h1) (rec h2) (rec h3)
+  where rec = foldAT fTri fNil
 
 
 
@@ -110,7 +112,7 @@ foldTrie f (TrieNodo valor hijos) = f valor (map (\(c, hijo) -> (c, foldTrie f h
 
 --Ejercicio 3
 unoxuno :: Procesador [a] [a]
-unoxuno = foldr (\x ac -> [x] : ac) []
+unoxuno = map (: [])
 
 
 sufijos :: Procesador [a] [a]
@@ -122,13 +124,13 @@ sufijos (x:xs) = (x:xs) : sufijos xs
 
 
 preorder :: Procesador (AT a) a
-preorder = foldAT (\rr ri rm rd -> rr : (ri ++ rm ++ rd)) []
+preorder = foldAT (\r ri rm rd -> r : (ri ++ rm ++ rd)) []
 
 inorder :: Procesador (AT a) a
-inorder = foldAT (\rr ri rm rd ->  ri ++ rm ++ [rr] ++ rd) []
+inorder = foldAT (\r ri rm rd ->  ri ++ rm ++ [r] ++ rd) []
 
 postorder :: Procesador (AT a) a
-postorder = foldAT (\rr ri rm rd -> (ri ++ rm ++ rd) ++ [rr]) []
+postorder = foldAT (\r ri rm rd -> (ri ++ rm ++ rd) ++ [r]) []
 
 
 --Ejercicio 5
