@@ -68,8 +68,8 @@ instance Show a => Show (Trie a) where
 procVacio :: Procesador a b
 procVacio = (\_ -> [])
 
-procId :: Procesador [a] a
-procId = id
+procId :: Procesador a a
+procId = (\x -> [x])
 
 
 procCola :: Procesador [a] a
@@ -107,7 +107,8 @@ foldRose f (Rose x hijos) = f x (map ac hijos)
 
 
 foldTrie :: (Maybe a -> [(Char, b)] -> b) -> Trie a -> b
-foldTrie f (TrieNodo valor hijos) = f valor (map (\(c, hijo) -> (c, foldTrie f hijo)) hijos)
+foldTrie f (TrieNodo valor hijos) = f valor (map foldear hijos)
+  where foldear (c, hijo) = (c, foldTrie f hijo)
 
 
 --Ejercicio 3
@@ -136,7 +137,7 @@ postorder = foldAT (\r ri rm rd -> (ri ++ rm ++ rd) ++ [r]) []
 --Ejercicio 5
 
 preorderRose :: Procesador (RoseTree a) a
-preorderRose = foldRose (\n rec -> if null rec then [n] else n : concat rec)
+preorderRose = foldRose (\n rec -> n : concat rec)
 
 
 hojasRose :: Procesador (RoseTree a) a
@@ -151,7 +152,12 @@ ramasRose = foldRose (\n rec -> if null rec then [[n]] else map (n:) (concat rec
 
 
 caminos :: Trie a -> [String]
-caminos = foldTrie (\_ hijos -> "" : [v : hijo | (v, hijos') <- hijos, hijo <- hijos'])
+caminos = foldTrie construirCaminos
+  where
+    construirCaminos :: Maybe a -> [(Char, [String])] -> [String]
+    construirCaminos valor hijos =
+      let caminosHijos = concatMap (\(v, hijo) -> map (v :) hijo) hijos
+      in "" : caminosHijos
 
 
 --Ejercicio 7
@@ -178,7 +184,7 @@ ifProc = \f p1 p2 x -> if f x then p1 x else p2 x
 
 -- 8.c)
 (.!) :: Procesador b c -> Procesador a b -> Procesador a c
-(.!) p1 p2 = \x -> concatMap p1 (p2 x)
+(.!) p1 p2 = (concatMap p1) . p2  
 
 
 {-Tests-}
@@ -227,8 +233,6 @@ allTests = test [ -- Reemplazar los tests de prueba por tests propios
 
 testsEj1 = TestList [
   "procVacio" ~: ([] :: [Int]) ~=? procVacio (42 :: Int),
-  "procId lista vacía" ~: ([] :: [Int]) ~=? procId ([] :: [Int]),
-  "procId lista no vacía" ~: ([1,2,3] :: [Int]) ~=? procId ([1,2,3] :: [Int]),
   "procCola lista vacía" ~: ([] :: [Int]) ~=? procCola ([] :: [Int]),
   "procCola lista no vacía" ~: ([2,3] :: [Int]) ~=? procCola ([1,2,3] :: [Int]),
   "procHijosRose sin hijos" ~: ([] :: [RoseTree Int]) ~=? procHijosRose (Rose (1 :: Int) []),
@@ -322,3 +326,7 @@ testsEj8c = test [
   "test enunciado ej8c" ~: ((\z->[0..z]) .! (map (+1))) [1,3] ~?= [0,1,2,0,1,2,3,4]
   ]
 
+
+
+--"procId lista vacía" ~: ([] :: [Int]) ~=? procId ([] :: [Int]),
+--"procId lista no vacía" ~: ([1,2,3] :: [Int]) ~=? procId ([1,2,3] :: [Int]),
